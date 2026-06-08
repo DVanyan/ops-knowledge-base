@@ -1,10 +1,36 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: opskb-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - opskb-network
+
   backend:
     build:
       context: ./backend
     container_name: opskb-backend
+    restart: unless-stopped
     ports:
       - "8089:8089"
+    env_file:
+      - .env
     volumes:
       - ./backend/app:/app/app
-    restart: unless-stopped
+    depends_on:
+      - postgres
+    networks:
+      - opskb-network
+
+volumes:
+  postgres_data:
+
+networks:
+  opskb-network:
+    driver: bridge

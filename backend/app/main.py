@@ -1,4 +1,13 @@
-from fastapi import FastAPI
+from typing import List
+
+from fastapi import Depends, FastAPI
+from sqlalchemy.orm import Session
+
+from app.db.session import Base, engine, get_db
+from app.models.record import Record
+from app.schemas.record import RecordCreate, RecordOut
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Operations Knowledge Platform API",
@@ -15,27 +24,15 @@ def health_check():
     }
 
 
-@app.get("/api/records")
-def get_records():
-    return [
-        {
-            "id": 1,
-            "type": "incident",
-            "title": "Jenkins container failed after restart",
-            "service": "Jenkins",
-            "severity": "medium",
-            "status": "resolved",
-            "source": "manual",
-            "tags": ["jenkins", "docker", "permissions"],
-        },
-        {
-            "id": 2,
-            "type": "change",
-            "title": "Kernel updated on ubuntu-lab-01",
-            "service": "Linux",
-            "severity": "low",
-            "status": "completed",
-            "source": "api",
-            "tags": ["linux", "kernel", "update"],
-        },
-    ]
+@app.get("/api/records", response_model=List[RecordOut])
+def get_records(db: Session = Depends(get_db)):
+    return db.query(Record).order_by(Record.id.desc()).all()
+
+
+@app.post("/api/records", response_model=RecordOut)
+def create_record(record: RecordCreate, db: Session = Depends(get_db)):
+    db_record = Record(**record.model_dump())
+    db.add(db_record)
+    db.commit()
+    db.refresh(db_record)
+    return db_record
