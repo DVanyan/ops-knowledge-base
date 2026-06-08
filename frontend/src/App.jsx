@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import {
   Home,
   AlertTriangle,
@@ -20,13 +22,6 @@ const stats = [
   { title: "Tags", value: 48, diff: "+7 this week", icon: Tag },
 ];
 
-const records = [
-  { title: "Jenkins container failed due to volume permissions", type: "incident", tags: ["jenkins", "docker", "permissions"], date: "20.05.2026" },
-  { title: "Kernel updated on ubuntu-lab-01", type: "change", tags: ["linux", "kernel", "update"], date: "19.05.2026" },
-  { title: "Solution: clean Docker disk usage", type: "solution", tags: ["docker", "disk"], date: "18.05.2026" },
-  { title: "High CPU load caused by runaway process", type: "incident", tags: ["cpu", "linux"], date: "17.05.2026" },
-];
-
 const menu = [
   ["Dashboard", Home],
   ["Incidents", AlertTriangle],
@@ -40,6 +35,14 @@ const menu = [
 ];
 
 function App() {
+    const [records, setRecords] = useState([]);
+
+  useEffect(() => {
+    fetch("http://192.168.64.9:8089/api/records")
+      .then((response) => response.json())
+      .then((data) => setRecords(data))
+      .catch((error) => console.error("Failed to load records:", error));
+  }, []);
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <aside className="fixed left-0 top-0 h-screen w-72 bg-slate-950 text-white">
@@ -132,7 +135,9 @@ function App() {
                         ))}
                       </div>
                     </div>
-                    <span className="text-sm text-slate-500">{record.date}</span>
+                    <span className="text-sm text-slate-500">
+                      {new Date(record.created_at).toLocaleDateString()}
+                    </span>
                   </div>
                 ))}
               </div>
