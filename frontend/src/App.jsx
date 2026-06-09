@@ -48,6 +48,9 @@ function App() {
   const [activeSection, setActiveSection] = useState("dashboard");
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedTag, setSelectedTag] = useState(null);
+  const [selectedService, setSelectedService] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState("all");
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -62,12 +65,6 @@ function App() {
       .then((data) => setRecords(data))
       .catch((error) => console.error("Failed to load records:", error));
   }, []);
-
-  useEffect(() => {
-    if (records.length > 0 && !selectedRecord) {
-      setSelectedRecord(records[0]);
-    }
-  }, [records, selectedRecord]);
 
   const handleClassify = async (text) => {
     if (!text.trim()) {
@@ -197,6 +194,24 @@ function App() {
     setSelectedRecord(updatedRecords[0] || null);
     setIsEditing(false);
   };
+  const tagCounts = records.reduce((acc, record) => {
+    (record.tags || []).forEach((tag) => {
+      acc[tag] = (acc[tag] || 0) + 1;
+    });
+
+    return acc;
+  }, {});
+
+  const serviceCounts = records.reduce((acc, record) => {
+    if (record.service) {
+      acc[record.service] = (acc[record.service] || 0) + 1;
+    }
+
+    return acc;
+  }, {});
+
+  const popularTags = Object.entries(tagCounts);
+  const popularServices = Object.entries(serviceCounts);
 
   const stats = [
     {
@@ -241,7 +256,23 @@ function App() {
       (record.tags || []).join(" ").toLowerCase().includes(search)
     );
   });
+  if (selectedTag) {
+    filteredRecords = filteredRecords.filter((record) =>
+      (record.tags || []).includes(selectedTag)
+    );
+  }
 
+  if (selectedService) {
+    filteredRecords = filteredRecords.filter(
+      (record) => record.service === selectedService
+    );
+  }
+
+  if (selectedStatus !== "all") {
+    filteredRecords = filteredRecords.filter(
+      (record) => record.status === selectedStatus
+    );
+  }
   const activeMenuItem = menu.find((item) => item.id === activeSection);
   const pageTitle = activeMenuItem ? activeMenuItem.name : "Dashboard";
 
@@ -304,7 +335,23 @@ function App() {
 
         <section className="p-10">
           <h1 className="mb-8 text-3xl font-bold">{pageTitle}</h1>
-
+          <div className="mb-6 flex flex-wrap gap-2">
+            {["all", "open", "investigating", "resolved", "closed"].map((status) => (
+              <button
+                key={status}
+                onClick={() => {
+                  setSelectedStatus(status);
+                  setIsEditing(false);
+                }}
+                className={`rounded-full px-4 py-2 text-sm font-medium ${selectedStatus === status
+                  ? "bg-blue-600 text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+              >
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+              </button>
+            ))}
+          </div>
           <div className="grid grid-cols-4 gap-6">
             {stats.map(({ title, value, diff, icon: Icon }) => (
               <div
@@ -326,7 +373,13 @@ function App() {
           </div>
 
           <div className="mt-8 grid grid-cols-[1.4fr_1fr] gap-6">
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div
+              onClick={() => {
+                setSelectedRecord(null);
+                setIsEditing(false);
+              }}
+              className="rounded-2xl border border-slate-200 bg-white shadow-sm"
+            >
               <div className="border-b border-slate-200 px-6 py-5">
                 <h2 className="text-lg font-bold">
                   {activeSection === "dashboard" ? "Recent Records" : pageTitle}
@@ -343,7 +396,8 @@ function App() {
                 {filteredRecords.map((record) => (
                   <div
                     key={record.id}
-                    onClick={() => {
+                    onClick={(event) => {
+                      event.stopPropagation();
                       setSelectedRecord(record);
                       setIsEditing(false);
                     }}
@@ -614,7 +668,58 @@ function App() {
                   </div>
                 )}
               </div>
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 className="mb-4 text-lg font-bold">Popular Tags</h2>
 
+                <div className="flex flex-wrap gap-2">
+                  {popularTags.length === 0 && (
+                    <p className="text-sm text-slate-500">No tags yet</p>
+                  )}
+
+                  {popularTags.map(([tag, count]) => (
+                    <button
+                      key={tag}
+                      onClick={() => {
+                        setSelectedTag(selectedTag === tag ? null : tag);
+                        setSelectedService(null);
+                      }}
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${selectedTag === tag
+                        ? "bg-blue-600 text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        }`}
+                    >
+                      {tag} ({count})
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 className="mb-4 text-lg font-bold">Services</h2>
+
+                <div className="flex flex-wrap gap-2">
+                  {popularServices.length === 0 && (
+                    <p className="text-sm text-slate-500">No services yet</p>
+                  )}
+
+                  {popularServices.map(([service, count]) => (
+                    <button
+                      key={service}
+                      onClick={() => {
+                        setSelectedService(
+                          selectedService === service ? null : service
+                        );
+                        setSelectedTag(null);
+                      }}
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${selectedService === service
+                        ? "bg-blue-600 text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        }`}
+                    >
+                      {service} ({count})
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="mb-4 flex items-center gap-3">
                   <Sparkles className="text-blue-600" />
