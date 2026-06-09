@@ -23,6 +23,7 @@ class Record(Base):
 
     root_cause = Column(Text, nullable=True)
     solution = Column(Text, nullable=True)
+    commands = Column(Text, nullable=True)
 
     tags = Column(ARRAY(String), nullable=True, default=[])
 

@@ -15,6 +15,7 @@ class RecordCreate(BaseModel):
     source: Optional[str] = "manual"
     root_cause: Optional[str] = None
     solution: Optional[str] = None
+    commands: Optional[str] = None
     tags: List[str] = []
 
 

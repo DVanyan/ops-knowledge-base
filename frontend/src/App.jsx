@@ -42,6 +42,7 @@ function App() {
   const [editStatus, setEditStatus] = useState("");
   const [editRootCause, setEditRootCause] = useState("");
   const [editSolution, setEditSolution] = useState("");
+  const [editCommands, setEditCommands] = useState("");
 
   useEffect(() => {
     fetch(`${API_URL}/api/records`)
@@ -94,6 +95,7 @@ function App() {
         severity: classification.severity,
         status: "open",
         source: "manual",
+        commands: "",
         tags: classification.tags,
       }),
     });
@@ -114,6 +116,7 @@ function App() {
     setEditStatus(selectedRecord.status || "open");
     setEditRootCause(selectedRecord.root_cause || "");
     setEditSolution(selectedRecord.solution || "");
+    setEditCommands(selectedRecord.commands || "");
     setIsEditing(true);
   };
 
@@ -124,6 +127,7 @@ function App() {
     setEditStatus("");
     setEditRootCause("");
     setEditSolution("");
+    setEditCommands("");
   };
 
   const handleSaveEdit = async () => {
@@ -143,6 +147,7 @@ function App() {
         source: selectedRecord.source,
         root_cause: editRootCause,
         solution: editSolution,
+        commands: editCommands,
         tags: selectedRecord.tags || [],
       }),
     });
@@ -220,6 +225,7 @@ function App() {
       record.title?.toLowerCase().includes(search) ||
       record.description?.toLowerCase().includes(search) ||
       record.service?.toLowerCase().includes(search) ||
+      record.commands?.toLowerCase().includes(search) ||
       (record.tags || []).join(" ").toLowerCase().includes(search)
     );
   });
@@ -243,8 +249,8 @@ function App() {
               key={id}
               onClick={() => setActiveSection(id)}
               className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm ${activeSection === id
-                  ? "bg-blue-600 text-white"
-                  : "text-slate-300 hover:bg-slate-900"
+                ? "bg-blue-600 text-white"
+                : "text-slate-300 hover:bg-slate-900"
                 }`}
             >
               <Icon size={18} />
@@ -330,8 +336,8 @@ function App() {
                       setIsEditing(false);
                     }}
                     className={`flex cursor-pointer items-center justify-between px-6 py-4 ${selectedRecord?.id === record.id
-                        ? "bg-blue-50"
-                        : "hover:bg-slate-50"
+                      ? "bg-blue-50"
+                      : "hover:bg-slate-50"
                       }`}
                   >
                     <div>
@@ -490,6 +496,24 @@ function App() {
                           <p className="text-sm leading-6 text-slate-700">
                             {selectedRecord.solution || "Not specified"}
                           </p>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase text-slate-400">
+                          Commands
+                        </p>
+
+                        {isEditing ? (
+                          <textarea
+                            value={editCommands}
+                            onChange={(event) => setEditCommands(event.target.value)}
+                            className="mt-1 h-28 w-full rounded-xl border border-slate-200 p-3 font-mono text-sm outline-none focus:border-blue-500"
+                            placeholder="Example: docker compose restart jenkins"
+                          />
+                        ) : (
+                          <pre className="mt-1 whitespace-pre-wrap rounded-xl bg-slate-950 p-4 text-sm text-slate-100">
+                            {selectedRecord.commands || "No commands"}
+                          </pre>
                         )}
                       </div>
                       <div>
