@@ -16,6 +16,18 @@ import {
 } from "lucide-react";
 
 const API_URL = "http://192.168.64.9:8089";
+const getStatusClass = (status) => {
+  switch (status) {
+    case "resolved":
+      return "bg-green-100 text-green-700";
+    case "investigating":
+      return "bg-yellow-100 text-yellow-700";
+    case "closed":
+      return "bg-slate-200 text-slate-700";
+    default:
+      return "bg-red-100 text-red-700";
+  }
+};
 
 const menu = [
   { id: "dashboard", name: "Dashboard", icon: Home },
@@ -453,9 +465,13 @@ function App() {
                             <option value="closed">Closed</option>
                           </select>
                         ) : (
-                          <p className="font-medium">
+                          <span
+                            className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getStatusClass(
+                              selectedRecord.status
+                            )}`}
+                          >
                             {selectedRecord.status || "open"}
-                          </p>
+                          </span>
                         )}
                       </div>
 
@@ -557,15 +573,27 @@ function App() {
                       </div>
                     </div>
 
-                    <div>
-                      <p className="text-xs uppercase text-slate-400">
-                        Created
-                      </p>
-                      <p className="text-sm">
-                        {new Date(selectedRecord.created_at).toLocaleString()}
-                      </p>
-                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs uppercase text-slate-400">
+                          Created
+                        </p>
+                        <p className="text-sm">
+                          {new Date(selectedRecord.created_at).toLocaleString()}
+                        </p>
+                      </div>
 
+                      <div>
+                        <p className="text-xs uppercase text-slate-400">
+                          Updated
+                        </p>
+                        <p className="text-sm">
+                          {selectedRecord.updated_at
+                            ? new Date(selectedRecord.updated_at).toLocaleString()
+                            : "Not updated yet"}
+                        </p>
+                      </div>
+                    </div>
                     {isEditing && (
                       <div className="flex gap-3 pt-2">
                         <button
