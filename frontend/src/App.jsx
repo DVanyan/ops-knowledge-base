@@ -39,6 +39,7 @@ const menu = [
 function App() {
   const [records, setRecords] = useState([]);
   const [newEntryText, setNewEntryText] = useState("");
+  const [classification, setClassification] = useState(null);
 
   useEffect(() => {
     fetch(`${API_URL}/api/records`)
@@ -46,6 +47,31 @@ function App() {
       .then((data) => setRecords(data))
       .catch((error) => console.error("Failed to load records:", error));
   }, []);
+
+const handleClassify = async (text) => {
+  if (!text.trim()) {
+    setClassification(null);
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/api/classify`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text,
+      }),
+    });
+
+    const data = await response.json();
+
+    setClassification(data);
+  } catch (error) {
+    console.error(error);
+  }
+};
 
 const handleCreateRecord = async () => {
   if (!newEntryText.trim()) {
@@ -85,6 +111,7 @@ const handleCreateRecord = async () => {
 
   setRecords([createdRecord, ...records]);
   setNewEntryText("");
+  setClassification(null);
 };
 
   return (
@@ -211,10 +238,51 @@ const handleCreateRecord = async () => {
 
               <textarea
                 value={newEntryText}
-                onChange={(event) => setNewEntryText(event.target.value)}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setNewEntryText(value);
+                  handleClassify(value);
+                }}
                 className="h-44 w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-blue-500"
                 placeholder="Example: Jenkins container failed after restart because of permission denied on volume. Solution: chown -R 1000:1000 ./jenkins_home and restart compose."
               />
+
+              {classification && (
+                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <h3 className="mb-3 font-semibold text-slate-800">
+                    Detected Classification
+                  </h3>
+
+                  <div className="space-y-2 text-sm">
+                    <p>
+                      <strong>Type:</strong> {classification.type}
+                    </p>
+
+                    <p>
+                      <strong>Service:</strong> {classification.service}
+                    </p>
+
+                    <p>
+                      <strong>Severity:</strong> {classification.severity}
+                    </p>
+
+                    <div>
+                      <strong>Tags:</strong>
+
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {(classification.tags || []).map((tag) => (
+                          <span
+                            key={tag}
+                            className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-700"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <button
                 onClick={handleCreateRecord}
