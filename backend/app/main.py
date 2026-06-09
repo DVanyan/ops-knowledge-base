@@ -57,17 +57,25 @@ def update_record(
     db: Session = Depends(get_db),
 ):
     db_record = db.query(Record).filter(Record.id == record_id).first()
+    if not db_record:
+        raise HTTPException(status_code=404, detail="Record not found")
+    for key, value in updated_record.model_dump().items():
+        setattr(db_record, key, value)
+    db.commit()
+    db.refresh(db_record)
+    return db_record
+
+@app.delete("/api/records/{record_id}")
+def delete_record(record_id: int, db: Session = Depends(get_db)):
+    db_record = db.query(Record).filter(Record.id == record_id).first()
 
     if not db_record:
         raise HTTPException(status_code=404, detail="Record not found")
 
-    for key, value in updated_record.model_dump().items():
-        setattr(db_record, key, value)
-
+    db.delete(db_record)
     db.commit()
-    db.refresh(db_record)
 
-    return db_record
+    return {"message": "Record deleted", "id": record_id}
 
 @app.post("/api/classify")
 def classify_record(payload: dict):
