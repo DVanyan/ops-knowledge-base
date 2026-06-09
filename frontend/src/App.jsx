@@ -29,6 +29,25 @@ const getStatusClass = (status) => {
   }
 };
 
+const getSeverityClass = (severity) => {
+  switch (severity?.toLowerCase()) {
+    case "critical":
+      return "bg-red-100 text-red-700";
+
+    case "high":
+      return "bg-orange-100 text-orange-700";
+
+    case "medium":
+      return "bg-yellow-100 text-yellow-700";
+
+    case "low":
+      return "bg-green-100 text-green-700";
+
+    default:
+      return "bg-slate-100 text-slate-700";
+  }
+};
+
 const menu = [
   { id: "dashboard", name: "Dashboard", icon: Home },
   { id: "incident", name: "Incidents", icon: AlertTriangle },
@@ -51,6 +70,7 @@ function App() {
   const [selectedTag, setSelectedTag] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -273,6 +293,19 @@ function App() {
       (record) => record.status === selectedStatus
     );
   }
+
+  filteredRecords = [...filteredRecords].sort((a, b) => {
+    if (sortBy === "oldest") {
+      return new Date(a.created_at) - new Date(b.created_at);
+    }
+
+    if (sortBy === "updated") {
+      return new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at);
+    }
+
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
+
   const activeMenuItem = menu.find((item) => item.id === activeSection);
   const pageTitle = activeMenuItem ? activeMenuItem.name : "Dashboard";
 
@@ -380,10 +413,23 @@ function App() {
               }}
               className="rounded-2xl border border-slate-200 bg-white shadow-sm"
             >
-              <div className="border-b border-slate-200 px-6 py-5">
+              <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
                 <h2 className="text-lg font-bold">
-                  {activeSection === "dashboard" ? "Recent Records" : pageTitle}
+                  {activeSection === "dashboard"
+                    ? `Recent Records (${filteredRecords.length})`
+                    : `${pageTitle} (${filteredRecords.length})`}
                 </h2>
+
+                <select
+                  value={sortBy}
+                  onClick={(event) => event.stopPropagation()}
+                  onChange={(event) => setSortBy(event.target.value)}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none"
+                >
+                  <option value="newest">Newest</option>
+                  <option value="oldest">Oldest</option>
+                  <option value="updated">Recently Updated</option>
+                </select>
               </div>
 
               <div className="divide-y divide-slate-100">
@@ -411,6 +457,13 @@ function App() {
                       <div className="mt-2 flex flex-wrap gap-2">
                         <span className="rounded-full bg-red-50 px-3 py-1 text-xs text-red-600">
                           {record.type}
+                        </span>
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-medium ${getSeverityClass(
+                            record.severity
+                          )}`}
+                        >
+                          {record.severity}
                         </span>
                         {record.service && (
                           <span className="rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-600">
