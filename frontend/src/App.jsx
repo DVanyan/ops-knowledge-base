@@ -39,6 +39,9 @@ function App() {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [editStatus, setEditStatus] = useState("");
+  const [editRootCause, setEditRootCause] = useState("");
+  const [editSolution, setEditSolution] = useState("");
 
   useEffect(() => {
     fetch(`${API_URL}/api/records`)
@@ -108,6 +111,9 @@ function App() {
 
     setEditTitle(selectedRecord.title || "");
     setEditDescription(selectedRecord.description || "");
+    setEditStatus(selectedRecord.status || "open");
+    setEditRootCause(selectedRecord.root_cause || "");
+    setEditSolution(selectedRecord.solution || "");
     setIsEditing(true);
   };
 
@@ -115,6 +121,9 @@ function App() {
     setIsEditing(false);
     setEditTitle("");
     setEditDescription("");
+    setEditStatus("");
+    setEditRootCause("");
+    setEditSolution("");
   };
 
   const handleSaveEdit = async () => {
@@ -130,10 +139,10 @@ function App() {
         service: selectedRecord.service,
         host: selectedRecord.host,
         severity: selectedRecord.severity,
-        status: selectedRecord.status,
+        status: editStatus,
         source: selectedRecord.source,
-        root_cause: selectedRecord.root_cause,
-        solution: selectedRecord.solution,
+        root_cause: editRootCause,
+        solution: editSolution,
         tags: selectedRecord.tags || [],
       }),
     });
@@ -233,11 +242,10 @@ function App() {
             <button
               key={id}
               onClick={() => setActiveSection(id)}
-              className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm ${
-                activeSection === id
+              className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm ${activeSection === id
                   ? "bg-blue-600 text-white"
                   : "text-slate-300 hover:bg-slate-900"
-              }`}
+                }`}
             >
               <Icon size={18} />
               {name}
@@ -321,11 +329,10 @@ function App() {
                       setSelectedRecord(record);
                       setIsEditing(false);
                     }}
-                    className={`flex cursor-pointer items-center justify-between px-6 py-4 ${
-                      selectedRecord?.id === record.id
+                    className={`flex cursor-pointer items-center justify-between px-6 py-4 ${selectedRecord?.id === record.id
                         ? "bg-blue-50"
                         : "hover:bg-slate-50"
-                    }`}
+                      }`}
                   >
                     <div>
                       <p className="font-semibold">{record.title}</p>
@@ -423,7 +430,68 @@ function App() {
                         <p className="text-xs uppercase text-slate-400">Type</p>
                         <p className="font-medium">{selectedRecord.type}</p>
                       </div>
+                      <div>
+                        <p className="text-xs uppercase text-slate-400">
+                          Status
+                        </p>
 
+                        {isEditing ? (
+                          <select
+                            value={editStatus}
+                            onChange={(event) => setEditStatus(event.target.value)}
+                            className="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
+                          >
+                            <option value="open">Open</option>
+                            <option value="investigating">Investigating</option>
+                            <option value="resolved">Resolved</option>
+                            <option value="closed">Closed</option>
+                          </select>
+                        ) : (
+                          <p className="font-medium">
+                            {selectedRecord.status || "open"}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <p className="text-xs uppercase text-slate-400">
+                          Root Cause
+                        </p>
+
+                        {isEditing ? (
+                          <textarea
+                            value={editRootCause}
+                            onChange={(event) =>
+                              setEditRootCause(event.target.value)
+                            }
+                            className="mt-1 h-24 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
+                          />
+                        ) : (
+                          <p className="text-sm leading-6 text-slate-700">
+                            {selectedRecord.root_cause || "Not specified"}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <p className="text-xs uppercase text-slate-400">
+                          Solution
+                        </p>
+
+                        {isEditing ? (
+                          <textarea
+                            value={editSolution}
+                            onChange={(event) =>
+                              setEditSolution(event.target.value)
+                            }
+                            className="mt-1 h-24 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
+                          />
+                        ) : (
+                          <p className="text-sm leading-6 text-slate-700">
+                            {selectedRecord.solution || "Not specified"}
+                          </p>
+                        )}
+                      </div>
                       <div>
                         <p className="text-xs uppercase text-slate-400">
                           Service
