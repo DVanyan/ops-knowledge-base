@@ -150,6 +150,28 @@ function App() {
     setIsEditing(false);
   };
 
+  const handleDeleteRecord = async () => {
+    if (!selectedRecord) return;
+
+    const confirmDelete = window.confirm(
+      `Delete record: "${selectedRecord.title}"?`
+    );
+
+    if (!confirmDelete) return;
+
+    await fetch(`${API_URL}/api/records/${selectedRecord.id}`, {
+      method: "DELETE",
+    });
+
+    const updatedRecords = records.filter(
+      (record) => record.id !== selectedRecord.id
+    );
+
+    setRecords(updatedRecords);
+    setSelectedRecord(updatedRecords[0] || null);
+    setIsEditing(false);
+  };
+
   const stats = [
     {
       title: "Incidents",
@@ -340,12 +362,21 @@ function App() {
                   <h2 className="text-lg font-bold">Record Details</h2>
 
                   {selectedRecord && !isEditing && (
-                    <button
-                      onClick={handleStartEdit}
-                      className="rounded-xl bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
-                    >
-                      Edit
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleStartEdit}
+                        className="rounded-xl bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        onClick={handleDeleteRecord}
+                        className="rounded-xl bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   )}
                 </div>
 
