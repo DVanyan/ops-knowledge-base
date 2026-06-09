@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
@@ -50,6 +50,24 @@ def create_record(record: RecordCreate, db: Session = Depends(get_db)):
     db.refresh(db_record)
     return db_record
 
+@app.put("/api/records/{record_id}", response_model=RecordOut)
+def update_record(
+    record_id: int,
+    updated_record: RecordCreate,
+    db: Session = Depends(get_db),
+):
+    db_record = db.query(Record).filter(Record.id == record_id).first()
+
+    if not db_record:
+        raise HTTPException(status_code=404, detail="Record not found")
+
+    for key, value in updated_record.model_dump().items():
+        setattr(db_record, key, value)
+
+    db.commit()
+    db.refresh(db_record)
+
+    return db_record
 
 @app.post("/api/classify")
 def classify_record(payload: dict):

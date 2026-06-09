@@ -17,29 +17,28 @@ import {
 
 const API_URL = "http://192.168.64.9:8089";
 
-const stats = [
-  { title: "Incidents", value: 24, diff: "+3 this week", icon: AlertTriangle },
-  { title: "Changes", value: 12, diff: "+2 this week", icon: RefreshCw },
-  { title: "Solutions", value: 31, diff: "+5 this week", icon: Lightbulb },
-  { title: "Tags", value: 48, diff: "+7 this week", icon: Tag },
-];
-
 const menu = [
-  ["Dashboard", Home],
-  ["Incidents", AlertTriangle],
-  ["Changes", RefreshCw],
-  ["Solutions / Troubleshooting", Lightbulb],
-  ["Commands", Terminal],
-  ["Postmortems", FileText],
-  ["Root Causes", GitBranch],
-  ["Useful Links", Link],
-  ["Tags", Tag],
+  { id: "dashboard", name: "Dashboard", icon: Home },
+  { id: "incident", name: "Incidents", icon: AlertTriangle },
+  { id: "change", name: "Changes", icon: RefreshCw },
+  { id: "solution", name: "Solutions / Troubleshooting", icon: Lightbulb },
+  { id: "command", name: "Commands", icon: Terminal },
+  { id: "postmortem", name: "Postmortems", icon: FileText },
+  { id: "root-cause", name: "Root Causes", icon: GitBranch },
+  { id: "links", name: "Useful Links", icon: Link },
+  { id: "tags", name: "Tags", icon: Tag },
 ];
 
 function App() {
   const [records, setRecords] = useState([]);
   const [newEntryText, setNewEntryText] = useState("");
   const [classification, setClassification] = useState(null);
+  const [activeSection, setActiveSection] = useState("dashboard");
+  const [selectedRecord, setSelectedRecord] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
 
   useEffect(() => {
     fetch(`${API_URL}/api/records`)
@@ -48,71 +47,154 @@ function App() {
       .catch((error) => console.error("Failed to load records:", error));
   }, []);
 
-const handleClassify = async (text) => {
-  if (!text.trim()) {
-    setClassification(null);
-    return;
-  }
+  useEffect(() => {
+    if (records.length > 0 && !selectedRecord) {
+      setSelectedRecord(records[0]);
+    }
+  }, [records, selectedRecord]);
 
-  try {
+  const handleClassify = async (text) => {
+    if (!text.trim()) {
+      setClassification(null);
+      return;
+    }
+
     const response = await fetch(`${API_URL}/api/classify`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        text,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
     });
 
     const data = await response.json();
-
     setClassification(data);
-  } catch (error) {
-    console.error(error);
-  }
-};
+  };
 
-const handleCreateRecord = async () => {
-  if (!newEntryText.trim()) {
-    return;
-  }
+  const handleCreateRecord = async () => {
+    if (!newEntryText.trim()) return;
 
-  const classifyResponse = await fetch(`${API_URL}/api/classify`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
+    const classifyResponse = await fetch(`${API_URL}/api/classify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: newEntryText }),
+    });
+
+    const classification = await classifyResponse.json();
+
+    const recordResponse = await fetch(`${API_URL}/api/records`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: newEntryText.slice(0, 80),
+        description: newEntryText,
+        type: classification.type,
+        service: classification.service,
+        severity: classification.severity,
+        status: "open",
+        source: "manual",
+        tags: classification.tags,
+      }),
+    });
+
+    const createdRecord = await recordResponse.json();
+
+    setRecords([createdRecord, ...records]);
+    setSelectedRecord(createdRecord);
+    setNewEntryText("");
+    setClassification(null);
+  };
+
+  const handleStartEdit = () => {
+    if (!selectedRecord) return;
+
+    setEditTitle(selectedRecord.title || "");
+    setEditDescription(selectedRecord.description || "");
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditTitle("");
+    setEditDescription("");
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedRecord) return;
+
+    const response = await fetch(`${API_URL}/api/records/${selectedRecord.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: editTitle,
+        description: editDescription,
+        type: selectedRecord.type,
+        service: selectedRecord.service,
+        host: selectedRecord.host,
+        severity: selectedRecord.severity,
+        status: selectedRecord.status,
+        source: selectedRecord.source,
+        root_cause: selectedRecord.root_cause,
+        solution: selectedRecord.solution,
+        tags: selectedRecord.tags || [],
+      }),
+    });
+
+    const updatedRecord = await response.json();
+
+    setRecords(
+      records.map((record) =>
+        record.id === updatedRecord.id ? updatedRecord : record
+      )
+    );
+
+    setSelectedRecord(updatedRecord);
+    setIsEditing(false);
+  };
+
+  const stats = [
+    {
+      title: "Incidents",
+      value: records.filter((record) => record.type === "incident").length,
+      diff: "Detected issues",
+      icon: AlertTriangle,
     },
-    body: JSON.stringify({
-      text: newEntryText,
-    }),
+    {
+      title: "Changes",
+      value: records.filter((record) => record.type === "change").length,
+      diff: "Infra updates",
+      icon: RefreshCw,
+    },
+    {
+      title: "Solutions",
+      value: records.filter((record) => record.type === "solution").length,
+      diff: "Known fixes",
+      icon: Lightbulb,
+    },
+    {
+      title: "Tags",
+      value: new Set(records.flatMap((record) => record.tags || [])).size,
+      diff: "Knowledge labels",
+      icon: Tag,
+    },
+  ];
+
+  let filteredRecords =
+    activeSection === "dashboard"
+      ? records
+      : records.filter((record) => record.type === activeSection);
+
+  filteredRecords = filteredRecords.filter((record) => {
+    const search = searchTerm.toLowerCase();
+
+    return (
+      record.title?.toLowerCase().includes(search) ||
+      record.description?.toLowerCase().includes(search) ||
+      record.service?.toLowerCase().includes(search) ||
+      (record.tags || []).join(" ").toLowerCase().includes(search)
+    );
   });
 
-  const classification = await classifyResponse.json();
-
-  const recordResponse = await fetch(`${API_URL}/api/records`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      title: newEntryText.slice(0, 80),
-      description: newEntryText,
-      type: classification.type,
-      service: classification.service,
-      severity: classification.severity,
-      status: "open",
-      source: "manual",
-      tags: classification.tags,
-    }),
-  });
-
-  const createdRecord = await recordResponse.json();
-
-  setRecords([createdRecord, ...records]);
-  setNewEntryText("");
-  setClassification(null);
-};
+  const activeMenuItem = menu.find((item) => item.id === activeSection);
+  const pageTitle = activeMenuItem ? activeMenuItem.name : "Dashboard";
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -125,18 +207,19 @@ const handleCreateRecord = async () => {
         </div>
 
         <nav className="mt-4 space-y-1 px-4">
-          {menu.map(([name, Icon], index) => (
-            <div
-              key={name}
-              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm ${
-                index === 0
+          {menu.map(({ id, name, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setActiveSection(id)}
+              className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm ${
+                activeSection === id
                   ? "bg-blue-600 text-white"
                   : "text-slate-300 hover:bg-slate-900"
               }`}
             >
               <Icon size={18} />
               {name}
-            </div>
+            </button>
           ))}
         </nav>
 
@@ -151,7 +234,12 @@ const handleCreateRecord = async () => {
         <header className="flex h-20 items-center justify-between border-b border-slate-200 bg-white px-10">
           <div className="flex w-[520px] items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 text-slate-400">
             <Search size={18} />
-            <span>Search records...</span>
+            <input
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search records..."
+              className="w-full bg-transparent text-slate-700 outline-none placeholder:text-slate-400"
+            />
             <span className="ml-auto rounded-md bg-slate-100 px-2 py-1 text-xs">
               CTRL + K
             </span>
@@ -167,7 +255,7 @@ const handleCreateRecord = async () => {
         </header>
 
         <section className="p-10">
-          <h1 className="mb-8 text-3xl font-bold">Dashboard</h1>
+          <h1 className="mb-8 text-3xl font-bold">{pageTitle}</h1>
 
           <div className="grid grid-cols-4 gap-6">
             {stats.map(({ title, value, diff, icon: Icon }) => (
@@ -189,24 +277,45 @@ const handleCreateRecord = async () => {
             ))}
           </div>
 
-          <div className="mt-8 grid grid-cols-[1.5fr_1fr] gap-6">
+          <div className="mt-8 grid grid-cols-[1.4fr_1fr] gap-6">
             <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="border-b border-slate-200 px-6 py-5">
-                <h2 className="text-lg font-bold">Recent Records</h2>
+                <h2 className="text-lg font-bold">
+                  {activeSection === "dashboard" ? "Recent Records" : pageTitle}
+                </h2>
               </div>
 
               <div className="divide-y divide-slate-100">
-                {records.map((record) => (
+                {filteredRecords.length === 0 && (
+                  <div className="px-6 py-8 text-sm text-slate-500">
+                    No records found in this section yet.
+                  </div>
+                )}
+
+                {filteredRecords.map((record) => (
                   <div
                     key={record.id}
-                    className="flex items-center justify-between px-6 py-4"
+                    onClick={() => {
+                      setSelectedRecord(record);
+                      setIsEditing(false);
+                    }}
+                    className={`flex cursor-pointer items-center justify-between px-6 py-4 ${
+                      selectedRecord?.id === record.id
+                        ? "bg-blue-50"
+                        : "hover:bg-slate-50"
+                    }`}
                   >
                     <div>
                       <p className="font-semibold">{record.title}</p>
-                      <div className="mt-2 flex gap-2">
+                      <div className="mt-2 flex flex-wrap gap-2">
                         <span className="rounded-full bg-red-50 px-3 py-1 text-xs text-red-600">
                           {record.type}
                         </span>
+                        {record.service && (
+                          <span className="rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-600">
+                            {record.service}
+                          </span>
+                        )}
                         {(record.tags || []).map((tag) => (
                           <span
                             key={tag}
@@ -225,52 +334,96 @@ const handleCreateRecord = async () => {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="mb-4 flex items-center gap-3">
-                <Sparkles className="text-blue-600" />
-                <div>
-                  <h2 className="text-lg font-bold">Create New Entry</h2>
-                  <p className="text-sm text-slate-500">
-                    AI classification ready
-                  </p>
+            <div className="space-y-6">
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="mb-6 flex items-center justify-between">
+                  <h2 className="text-lg font-bold">Record Details</h2>
+
+                  {selectedRecord && !isEditing && (
+                    <button
+                      onClick={handleStartEdit}
+                      className="rounded-xl bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
+                    >
+                      Edit
+                    </button>
+                  )}
                 </div>
-              </div>
 
-              <textarea
-                value={newEntryText}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  setNewEntryText(value);
-                  handleClassify(value);
-                }}
-                className="h-44 w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-blue-500"
-                placeholder="Example: Jenkins container failed after restart because of permission denied on volume. Solution: chown -R 1000:1000 ./jenkins_home and restart compose."
-              />
+                {!selectedRecord && (
+                  <p className="text-sm text-slate-500">Select a record</p>
+                )}
 
-              {classification && (
-                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <h3 className="mb-3 font-semibold text-slate-800">
-                    Detected Classification
-                  </h3>
-
-                  <div className="space-y-2 text-sm">
-                    <p>
-                      <strong>Type:</strong> {classification.type}
-                    </p>
-
-                    <p>
-                      <strong>Service:</strong> {classification.service}
-                    </p>
-
-                    <p>
-                      <strong>Severity:</strong> {classification.severity}
-                    </p>
+                {selectedRecord && (
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-xs uppercase text-slate-400">Title</p>
+                      {isEditing ? (
+                        <input
+                          value={editTitle}
+                          onChange={(event) => setEditTitle(event.target.value)}
+                          className="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
+                        />
+                      ) : (
+                        <p className="font-semibold">{selectedRecord.title}</p>
+                      )}
+                    </div>
 
                     <div>
-                      <strong>Tags:</strong>
+                      <p className="text-xs uppercase text-slate-400">
+                        Description
+                      </p>
+                      {isEditing ? (
+                        <textarea
+                          value={editDescription}
+                          onChange={(event) =>
+                            setEditDescription(event.target.value)
+                          }
+                          className="mt-1 h-32 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
+                        />
+                      ) : (
+                        <p className="text-sm leading-6 text-slate-700">
+                          {selectedRecord.description || "No description"}
+                        </p>
+                      )}
+                    </div>
 
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {(classification.tags || []).map((tag) => (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs uppercase text-slate-400">Type</p>
+                        <p className="font-medium">{selectedRecord.type}</p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs uppercase text-slate-400">
+                          Service
+                        </p>
+                        <p className="font-medium">
+                          {selectedRecord.service || "Unknown"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs uppercase text-slate-400">
+                          Severity
+                        </p>
+                        <p className="font-medium">{selectedRecord.severity}</p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs uppercase text-slate-400">
+                          Source
+                        </p>
+                        <p className="font-medium">{selectedRecord.source}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="mb-2 text-xs uppercase text-slate-400">
+                        Tags
+                      </p>
+
+                      <div className="flex flex-wrap gap-2">
+                        {(selectedRecord.tags || []).map((tag) => (
                           <span
                             key={tag}
                             className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-700"
@@ -280,21 +433,100 @@ const handleCreateRecord = async () => {
                         ))}
                       </div>
                     </div>
+
+                    <div>
+                      <p className="text-xs uppercase text-slate-400">
+                        Created
+                      </p>
+                      <p className="text-sm">
+                        {new Date(selectedRecord.created_at).toLocaleString()}
+                      </p>
+                    </div>
+
+                    {isEditing && (
+                      <div className="flex gap-3 pt-2">
+                        <button
+                          onClick={handleSaveEdit}
+                          className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                        >
+                          Save
+                        </button>
+
+                        <button
+                          onClick={handleCancelEdit}
+                          className="rounded-xl bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="mb-4 flex items-center gap-3">
+                  <Sparkles className="text-blue-600" />
+                  <div>
+                    <h2 className="text-lg font-bold">Create New Entry</h2>
+                    <p className="text-sm text-slate-500">
+                      Live classification preview
+                    </p>
                   </div>
                 </div>
-              )}
 
-              <button
-                onClick={handleCreateRecord}
-                className="mt-4 w-full rounded-xl bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700"
-              >
-                Submit & Classify
-              </button>
+                <textarea
+                  value={newEntryText}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setNewEntryText(value);
+                    handleClassify(value);
+                  }}
+                  className="h-44 w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-blue-500"
+                  placeholder="Example: Jenkins container failed after restart because of permission denied on volume."
+                />
 
-              <p className="mt-4 text-sm text-slate-500">
-                AI will detect type, service, category, root cause, solution and
-                tags.
-              </p>
+                {classification && (
+                  <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <h3 className="mb-3 font-semibold text-slate-800">
+                      Detected Classification
+                    </h3>
+
+                    <div className="space-y-2 text-sm">
+                      <p>
+                        <strong>Type:</strong> {classification.type}
+                      </p>
+                      <p>
+                        <strong>Service:</strong> {classification.service}
+                      </p>
+                      <p>
+                        <strong>Severity:</strong> {classification.severity}
+                      </p>
+
+                      <div>
+                        <strong>Tags:</strong>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {(classification.tags || []).map((tag) => (
+                            <span
+                              key={tag}
+                              className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-700"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  onClick={handleCreateRecord}
+                  className="mt-4 w-full rounded-xl bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700"
+                >
+                  Submit & Classify
+                </button>
+              </div>
             </div>
           </div>
         </section>
