@@ -47,33 +47,45 @@ function App() {
       .catch((error) => console.error("Failed to load records:", error));
   }, []);
 
-  const handleCreateRecord = async () => {
-    if (!newEntryText.trim()) {
-      return;
-    }
+const handleCreateRecord = async () => {
+  if (!newEntryText.trim()) {
+    return;
+  }
 
-    const response = await fetch(`${API_URL}/api/records`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        title: newEntryText.slice(0, 80),
-        description: newEntryText,
-        type: "note",
-        service: "Unknown",
-        severity: "low",
-        status: "open",
-        source: "manual",
-        tags: ["manual"],
-      }),
-    });
+  const classifyResponse = await fetch(`${API_URL}/api/classify`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      text: newEntryText,
+    }),
+  });
 
-    const createdRecord = await response.json();
+  const classification = await classifyResponse.json();
 
-    setRecords([createdRecord, ...records]);
-    setNewEntryText("");
-  };
+  const recordResponse = await fetch(`${API_URL}/api/records`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      title: newEntryText.slice(0, 80),
+      description: newEntryText,
+      type: classification.type,
+      service: classification.service,
+      severity: classification.severity,
+      status: "open",
+      source: "manual",
+      tags: classification.tags,
+    }),
+  });
+
+  const createdRecord = await recordResponse.json();
+
+  setRecords([createdRecord, ...records]);
+  setNewEntryText("");
+};
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">

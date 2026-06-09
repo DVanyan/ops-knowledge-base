@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.db.session import Base, engine, get_db
 from app.models.record import Record
 from app.schemas.record import RecordCreate, RecordOut
+from app.services.classifier import classify_text
 
 Base.metadata.create_all(bind=engine)
 
@@ -48,3 +49,9 @@ def create_record(record: RecordCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_record)
     return db_record
+
+
+@app.post("/api/classify")
+def classify_record(payload: dict):
+    text = payload.get("text", "")
+    return classify_text(text)
