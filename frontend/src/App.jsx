@@ -386,27 +386,39 @@ function App() {
                 </span>
 
                 {selectedTag && (
-                  <span className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-700">
-                    Tag: {selectedTag}
-                  </span>
+                  <button
+                    onClick={() => setSelectedTag(null)}
+                    className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-700 hover:bg-blue-200"
+                  >
+                    Tag: {selectedTag} ×
+                  </button>
                 )}
 
                 {selectedService && (
-                  <span className="rounded-full bg-green-100 px-3 py-1 text-xs text-green-700">
-                    Service: {selectedService}
-                  </span>
+                  <button
+                    onClick={() => setSelectedService(null)}
+                    className="rounded-full bg-green-100 px-3 py-1 text-xs text-green-700 hover:bg-green-200"
+                  >
+                    Service: {selectedService} ×
+                  </button>
                 )}
 
                 {selectedStatus !== "all" && (
-                  <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs text-yellow-700">
-                    Status: {selectedStatus}
-                  </span>
+                  <button
+                    onClick={() => setSelectedStatus("all")}
+                    className="rounded-full bg-yellow-100 px-3 py-1 text-xs text-yellow-700 hover:bg-yellow-200"
+                  >
+                    Status: {selectedStatus} ×
+                  </button>
                 )}
 
                 {searchTerm && (
-                  <span className="rounded-full bg-purple-100 px-3 py-1 text-xs text-purple-700">
-                    Search: {searchTerm}
-                  </span>
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="rounded-full bg-purple-100 px-3 py-1 text-xs text-purple-700 hover:bg-purple-200"
+                  >
+                    Search: {searchTerm} ×
+                  </button>
                 )}
 
                 <button
@@ -784,7 +796,6 @@ function App() {
                       key={tag}
                       onClick={() => {
                         setSelectedTag(selectedTag === tag ? null : tag);
-                        setSelectedService(null);
                       }}
                       className={`rounded-full px-3 py-1 text-xs font-medium ${selectedTag === tag
                         ? "bg-blue-600 text-white"
@@ -811,7 +822,6 @@ function App() {
                         setSelectedService(
                           selectedService === service ? null : service
                         );
-                        setSelectedTag(null);
                       }}
                       className={`rounded-full px-3 py-1 text-xs font-medium ${selectedService === service
                         ? "bg-blue-600 text-white"
