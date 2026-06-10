@@ -47,12 +47,45 @@ const getSeverityClass = (severity) => {
       return "bg-slate-100 text-slate-700";
   }
 };
+const getTypeClass = (type) => {
+  switch (type?.toLowerCase()) {
+    case "incident":
+      return "bg-red-50 text-red-600";
 
+    case "change":
+      return "bg-orange-50 text-orange-600";
+
+    case "solution":
+      return "bg-green-50 text-green-600";
+
+    case "runbook":
+      return "bg-blue-50 text-blue-600";
+
+    case "procedure":
+      return "bg-cyan-50 text-cyan-600";
+
+    case "policy":
+      return "bg-purple-50 text-purple-600";
+
+    case "announcement":
+      return "bg-pink-50 text-pink-600";
+
+    case "postmortem":
+      return "bg-slate-200 text-slate-700";
+
+    default:
+      return "bg-slate-100 text-slate-600";
+  }
+};
 const menu = [
   { id: "dashboard", name: "Dashboard", icon: Home },
   { id: "incident", name: "Incidents", icon: AlertTriangle },
   { id: "change", name: "Changes", icon: RefreshCw },
   { id: "solution", name: "Solutions / Troubleshooting", icon: Lightbulb },
+  { id: "runbook", name: "Runbooks", icon: FileText },
+  { id: "procedure", name: "Procedures", icon: Terminal },
+  { id: "policy", name: "Policies", icon: GitBranch },
+  { id: "announcement", name: "Announcements", icon: Sparkles },
   { id: "command", name: "Commands", icon: Terminal },
   { id: "postmortem", name: "Postmortems", icon: FileText },
   { id: "root-cause", name: "Root Causes", icon: GitBranch },
@@ -64,6 +97,9 @@ function App() {
   const [records, setRecords] = useState([]);
   const [newEntryText, setNewEntryText] = useState("");
   const [classification, setClassification] = useState(null);
+  const [entryType, setEntryType] = useState("auto");
+  const [manualService, setManualService] = useState("");
+  const [manualTags, setManualTags] = useState("");
   const [activeSection, setActiveSection] = useState("dashboard");
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -105,18 +141,18 @@ function App() {
   const handleCreateRecord = async () => {
     if (!newEntryText.trim()) return;
 
-    const classifyResponse = await fetch(`${API_URL}/api/classify`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: newEntryText }),
-    });
+    let recordData;
 
-    const classification = await classifyResponse.json();
+    if (entryType === "auto") {
+      const classifyResponse = await fetch(`${API_URL}/api/classify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: newEntryText }),
+      });
 
-    const recordResponse = await fetch(`${API_URL}/api/records`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+      const classification = await classifyResponse.json();
+
+      recordData = {
         title: newEntryText.slice(0, 80),
         description: newEntryText,
         type: classification.type,
@@ -126,7 +162,30 @@ function App() {
         source: "manual",
         commands: "",
         tags: classification.tags,
-      }),
+      };
+    } else {
+      const parsedTags = manualTags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean);
+
+      recordData = {
+        title: newEntryText.slice(0, 80),
+        description: newEntryText,
+        type: entryType,
+        service: manualService.trim() || "Unknown",
+        severity: "low",
+        status: "open",
+        source: "manual",
+        commands: "",
+        tags: parsedTags.length > 0 ? parsedTags : [entryType],
+      };
+    }
+
+    const recordResponse = await fetch(`${API_URL}/api/records`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(recordData),
     });
 
     const createdRecord = await recordResponse.json();
@@ -135,6 +194,9 @@ function App() {
     setSelectedRecord(createdRecord);
     setNewEntryText("");
     setClassification(null);
+    setEntryType("auto");
+    setManualService("");
+    setManualTags("");
   };
 
   const handleStartEdit = () => {
@@ -517,7 +579,11 @@ function App() {
                     <div>
                       <p className="font-semibold">{record.title}</p>
                       <div className="mt-2 flex flex-wrap gap-2">
-                        <span className="rounded-full bg-red-50 px-3 py-1 text-xs text-red-600">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-medium ${getTypeClass(
+                            record.type
+                          )}`}
+                        >
                           {record.type}
                         </span>
                         <span
@@ -843,13 +909,67 @@ function App() {
                     </p>
                   </div>
                 </div>
+                <div className="mb-4">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Type
+                  </label>
 
+                  <select
+                    value={entryType}
+                    onChange={(event) => setEntryType(event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
+                  >
+                    <option value="auto">Auto</option>
+                    <option value="incident">Incident</option>
+                    <option value="change">Change</option>
+                    <option value="solution">Solution</option>
+                    <option value="runbook">Runbook</option>
+                    <option value="procedure">Procedure</option>
+                    <option value="policy">Policy</option>
+                    <option value="announcement">Announcement</option>
+                    <option value="postmortem">Postmortem</option>
+                  </select>
+                </div>
+                {entryType !== "auto" && (
+                  <div className="mb-4 space-y-4">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-700">
+                        Service
+                      </label>
+
+                      <input
+                        value={manualService}
+                        onChange={(event) => setManualService(event.target.value)}
+                        className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
+                        placeholder="Example: DNS, Jenkins, Zabbix, Linux"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-700">
+                        Tags
+                      </label>
+
+                      <input
+                        value={manualTags}
+                        onChange={(event) => setManualTags(event.target.value)}
+                        className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
+                        placeholder="Example: dns, domains, naming"
+                      />
+                    </div>
+                  </div>
+                )}
                 <textarea
                   value={newEntryText}
                   onChange={(event) => {
                     const value = event.target.value;
                     setNewEntryText(value);
-                    handleClassify(value);
+
+                    if (entryType === "auto") {
+                      handleClassify(value);
+                    } else {
+                      setClassification(null);
+                    }
                   }}
                   className="h-44 w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-blue-500"
                   placeholder="Example: Jenkins container failed after restart because of permission denied on volume."
@@ -893,7 +1013,7 @@ function App() {
                   onClick={handleCreateRecord}
                   className="mt-4 w-full rounded-xl bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700"
                 >
-                  Submit & Classify
+                  {entryType === "auto" ? "Submit & Classify" : "Submit"}
                 </button>
               </div>
             </div>
