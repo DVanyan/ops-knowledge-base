@@ -214,6 +214,12 @@ function App() {
     setSelectedRecord(updatedRecords[0] || null);
     setIsEditing(false);
   };
+  const clearFilters = () => {
+    setSelectedTag(null);
+    setSelectedService(null);
+    setSelectedStatus("all");
+    setSearchTerm("");
+  };
   const tagCounts = records.reduce((acc, record) => {
     (record.tags || []).forEach((tag) => {
       acc[tag] = (acc[tag] || 0) + 1;
@@ -232,7 +238,11 @@ function App() {
 
   const popularTags = Object.entries(tagCounts);
   const popularServices = Object.entries(serviceCounts);
-
+  const hasActiveFilters =
+    selectedTag ||
+    selectedService ||
+    selectedStatus !== "all" ||
+    searchTerm;
   const stats = [
     {
       title: "Incidents",
@@ -368,6 +378,46 @@ function App() {
 
         <section className="p-10">
           <h1 className="mb-8 text-3xl font-bold">{pageTitle}</h1>
+          {hasActiveFilters && (
+            <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-semibold text-slate-600">
+                  Active Filters:
+                </span>
+
+                {selectedTag && (
+                  <span className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-700">
+                    Tag: {selectedTag}
+                  </span>
+                )}
+
+                {selectedService && (
+                  <span className="rounded-full bg-green-100 px-3 py-1 text-xs text-green-700">
+                    Service: {selectedService}
+                  </span>
+                )}
+
+                {selectedStatus !== "all" && (
+                  <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs text-yellow-700">
+                    Status: {selectedStatus}
+                  </span>
+                )}
+
+                {searchTerm && (
+                  <span className="rounded-full bg-purple-100 px-3 py-1 text-xs text-purple-700">
+                    Search: {searchTerm}
+                  </span>
+                )}
+
+                <button
+                  onClick={clearFilters}
+                  className="ml-auto rounded-xl bg-red-50 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-100"
+                >
+                  Clear All
+                </button>
+              </div>
+            </div>
+          )}
           <div className="mb-6 flex flex-wrap gap-2">
             {["all", "open", "investigating", "resolved", "closed"].map((status) => (
               <button
@@ -416,7 +466,7 @@ function App() {
               <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
                 <h2 className="text-lg font-bold">
                   {activeSection === "dashboard"
-                    ? `Recent Records (${filteredRecords.length})`
+                    ? `Recent Records (${filteredRecords.length} of ${records.length})`
                     : `${pageTitle} (${filteredRecords.length})`}
                 </h2>
 
