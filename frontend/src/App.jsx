@@ -77,6 +77,32 @@ const getTypeClass = (type) => {
       return "bg-slate-100 text-slate-600";
   }
 };
+const getSectionText = (text, sectionName, nextSectionName) => {
+  if (!text) return "";
+
+  const startMarker = `${sectionName}:`;
+  const startIndex = text.indexOf(startMarker);
+
+  if (startIndex === -1) return "";
+
+  const contentStart = startIndex + startMarker.length;
+  const endIndex = nextSectionName
+    ? text.indexOf(`${nextSectionName}:`, contentStart)
+    : -1;
+
+  return text
+    .slice(contentStart, endIndex === -1 ? undefined : endIndex)
+    .trim();
+};
+
+const getTimelineItems = (text) => {
+  const timelineText = getSectionText(text, "Timeline", "Resolution");
+
+  return timelineText
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
 const menu = [
   { id: "dashboard", name: "Dashboard", icon: Home },
   { id: "incident", name: "Incidents", icon: AlertTriangle },
@@ -718,6 +744,47 @@ ${postmortemLessons}`
                           <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">
                             {selectedRecord.description || "No description"}
                           </p>
+                          {selectedRecord.type === "postmortem" &&
+                            getTimelineItems(selectedRecord.description).length > 0 && (
+                              <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4">
+                                <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
+                                  Incident Timeline
+                                </h3>
+
+                                <div className="mt-4">
+                                  {getTimelineItems(selectedRecord.description).map((item, index) => {
+                                    const timelineItems = getTimelineItems(selectedRecord.description);
+                                    const isFirst = index === 0;
+                                    const isLast = index === timelineItems.length - 1;
+
+                                    return (
+                                      <div key={index} className="flex items-center gap-5">
+                                        <div className="relative flex h-8 w-6 justify-center">
+                                          {!isFirst && (
+                                            <div className="absolute top-0 h-1/2 w-px bg-slate-500/40" />
+                                          )}
+
+                                          {!isLast && (
+                                            <div className="absolute bottom-0 h-1/2 w-px bg-slate-500/40" />
+                                          )}
+
+                                          <div
+                                            className={`absolute top-1/2 -translate-y-1/2 bg-blue-600 ${isLast
+                                              ? "h-5 w-5 rounded-full"
+                                              : "h-2.5 w-4 rounded-full"
+                                              }`}
+                                          />
+                                        </div>
+
+                                        <p className="text-sm leading-6 text-slate-700">
+                                          {item}
+                                        </p>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
                         </>
                       )}
                     </div>
