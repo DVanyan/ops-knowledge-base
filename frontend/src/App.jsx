@@ -690,7 +690,9 @@ ${postmortemLessons}`
 
                     <div>
                       <p className="text-xs uppercase text-slate-400">
-                        Description
+                        {selectedRecord.type === "postmortem"
+                          ? "Postmortem Details"
+                          : "Description"}
                       </p>
                       {isEditing ? (
                         <textarea
@@ -701,16 +703,36 @@ ${postmortemLessons}`
                           className="mt-1 h-32 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
                         />
                       ) : (
-                        <p className="text-sm leading-6 text-slate-700">
-                          {selectedRecord.description || "No description"}
-                        </p>
+                        <>
+                          {selectedRecord.type === "postmortem" && (
+                            <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
+                              <div className="flex items-center gap-2">
+                                <FileText size={18} className="text-blue-600" />
+                                <span className="font-semibold text-blue-700">
+                                  Postmortem Report
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                            {selectedRecord.description || "No description"}
+                          </p>
+                        </>
                       )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-xs uppercase text-slate-400">Type</p>
-                        <p className="font-medium">{selectedRecord.type}</p>
+
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getTypeClass(
+                            selectedRecord.type
+                          )}`}
+                        >
+                          {selectedRecord.type}
+                        </span>
                       </div>
                       <div>
                         <p className="text-xs uppercase text-slate-400">
@@ -739,63 +761,67 @@ ${postmortemLessons}`
                         )}
                       </div>
 
-                      <div>
-                        <p className="text-xs uppercase text-slate-400">
-                          Root Cause
-                        </p>
+                      {selectedRecord.type !== "postmortem" && (
+                        <>
+                          <div>
+                            <p className="text-xs uppercase text-slate-400">
+                              Root Cause
+                            </p>
 
-                        {isEditing ? (
-                          <textarea
-                            value={editRootCause}
-                            onChange={(event) =>
-                              setEditRootCause(event.target.value)
-                            }
-                            className="mt-1 h-24 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
-                          />
-                        ) : (
-                          <p className="text-sm leading-6 text-slate-700">
-                            {selectedRecord.root_cause || "Not specified"}
-                          </p>
-                        )}
-                      </div>
+                            {isEditing ? (
+                              <textarea
+                                value={editRootCause}
+                                onChange={(event) =>
+                                  setEditRootCause(event.target.value)
+                                }
+                                className="mt-1 h-24 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
+                              />
+                            ) : (
+                              <p className="text-sm leading-6 text-slate-700">
+                                {selectedRecord.root_cause || "Not specified"}
+                              </p>
+                            )}
+                          </div>
 
-                      <div>
-                        <p className="text-xs uppercase text-slate-400">
-                          Solution
-                        </p>
+                          <div>
+                            <p className="text-xs uppercase text-slate-400">
+                              Solution
+                            </p>
 
-                        {isEditing ? (
-                          <textarea
-                            value={editSolution}
-                            onChange={(event) =>
-                              setEditSolution(event.target.value)
-                            }
-                            className="mt-1 h-24 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
-                          />
-                        ) : (
-                          <p className="text-sm leading-6 text-slate-700">
-                            {selectedRecord.solution || "Not specified"}
-                          </p>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase text-slate-400">
-                          Commands
-                        </p>
+                            {isEditing ? (
+                              <textarea
+                                value={editSolution}
+                                onChange={(event) =>
+                                  setEditSolution(event.target.value)
+                                }
+                                className="mt-1 h-24 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
+                              />
+                            ) : (
+                              <p className="text-sm leading-6 text-slate-700">
+                                {selectedRecord.solution || "Not specified"}
+                              </p>
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-xs uppercase text-slate-400">
+                              Commands
+                            </p>
 
-                        {isEditing ? (
-                          <textarea
-                            value={editCommands}
-                            onChange={(event) => setEditCommands(event.target.value)}
-                            className="mt-1 h-28 w-full rounded-xl border border-slate-200 p-3 font-mono text-sm outline-none focus:border-blue-500"
-                            placeholder="Example: docker compose restart jenkins"
-                          />
-                        ) : (
-                          <pre className="mt-1 whitespace-pre-wrap rounded-xl bg-slate-950 p-4 text-sm text-slate-100">
-                            {selectedRecord.commands || "No commands"}
-                          </pre>
-                        )}
-                      </div>
+                            {isEditing ? (
+                              <textarea
+                                value={editCommands}
+                                onChange={(event) => setEditCommands(event.target.value)}
+                                className="mt-1 h-28 w-full rounded-xl border border-slate-200 p-3 font-mono text-sm outline-none focus:border-blue-500"
+                                placeholder="Example: docker compose restart jenkins"
+                              />
+                            ) : (
+                              <pre className="mt-1 whitespace-pre-wrap rounded-xl bg-slate-950 p-4 text-sm text-slate-100">
+                                {selectedRecord.commands || "No commands"}
+                              </pre>
+                            )}
+                          </div>
+                        </>
+                      )}
                       <div>
                         <p className="text-xs uppercase text-slate-400">
                           Service
@@ -809,7 +835,14 @@ ${postmortemLessons}`
                         <p className="text-xs uppercase text-slate-400">
                           Severity
                         </p>
-                        <p className="font-medium">{selectedRecord.severity}</p>
+
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getSeverityClass(
+                            selectedRecord.severity
+                          )}`}
+                        >
+                          {selectedRecord.severity}
+                        </span>
                       </div>
 
                       <div>
