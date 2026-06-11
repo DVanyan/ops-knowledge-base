@@ -723,44 +723,6 @@ ${postmortemLessons}`
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs uppercase text-slate-400">Type</p>
-
-                        <span
-                          className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getTypeClass(
-                            selectedRecord.type
-                          )}`}
-                        >
-                          {selectedRecord.type}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase text-slate-400">
-                          Status
-                        </p>
-
-                        {isEditing ? (
-                          <select
-                            value={editStatus}
-                            onChange={(event) => setEditStatus(event.target.value)}
-                            className="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
-                          >
-                            <option value="open">Open</option>
-                            <option value="investigating">Investigating</option>
-                            <option value="resolved">Resolved</option>
-                            <option value="closed">Closed</option>
-                          </select>
-                        ) : (
-                          <span
-                            className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getStatusClass(
-                              selectedRecord.status
-                            )}`}
-                          >
-                            {selectedRecord.status || "open"}
-                          </span>
-                        )}
-                      </div>
-
                       {selectedRecord.type !== "postmortem" && (
                         <>
                           <div>
@@ -822,77 +784,113 @@ ${postmortemLessons}`
                           </div>
                         </>
                       )}
-                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                        <p className="text-xs uppercase text-slate-400">
-                          Service
-                        </p>
-                        <p className="mt-1 font-semibold text-slate-900">
-                          {selectedRecord.service || "Unknown"}
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-xs uppercase text-slate-400">
-                          Severity
-                        </p>
-
-                        <span
-                          className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getSeverityClass(
-                            selectedRecord.severity
-                          )}`}
-                        >
-                          {selectedRecord.severity}
-                        </span>
-                      </div>
-
-                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                        <p className="text-xs uppercase text-slate-400">
-                          Source
-                        </p>
-                        <p className="mt-1 font-semibold text-slate-900">
-                          {selectedRecord.source}
-                        </p>
-                      </div>
                     </div>
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
+                        Record Metadata
+                      </h3>
 
-                    <div>
-                      <p className="mb-2 text-xs uppercase text-slate-400">
-                        Tags
-                      </p>
+                      <div className="space-y-3 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Type</span>
 
-                      <div className="flex flex-wrap gap-2">
-                        {(selectedRecord.tags || []).map((tag) => (
                           <span
-                            key={tag}
-                            className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-700"
+                            className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getTypeClass(
+                              selectedRecord.type
+                            )}`}
                           >
-                            {tag}
+                            {selectedRecord.type}
                           </span>
-                        ))}
+                        </div>
+
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Status</span>
+
+                          <span
+                            className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getStatusClass(
+                              selectedRecord.status
+                            )}`}
+                          >
+                            {selectedRecord.status || "open"}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Severity</span>
+
+                          <span
+                            className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getSeverityClass(
+                              selectedRecord.severity
+                            )}`}
+                          >
+                            {selectedRecord.severity}
+                          </span>
+                        </div>
+
+                        <hr className="border-slate-200" />
+
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Service</span>
+                          <span className="font-medium">
+                            {selectedRecord.service || "Unknown"}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Source</span>
+                          <span className="font-medium">
+                            {selectedRecord.source || "manual"}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Created</span>
+                          <span>
+                            {new Date(selectedRecord.created_at).toLocaleDateString(
+                              "en-US",
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              }
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Updated</span>
+                          <span>
+                            {selectedRecord.updated_at
+                              ? new Date(selectedRecord.updated_at).toLocaleDateString(
+                                "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                }
+                              )
+                              : "Never updated"}
+                          </span>
+                        </div>
+                        <hr className="border-slate-200" />
+
+                        <div>
+                          <span className="text-slate-500">Tags</span>
+
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {(selectedRecord.tags || []).map((tag) => (
+                              <span
+                                key={tag}
+                                className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-700"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs uppercase text-slate-400">
-                          Created
-                        </p>
-                        <p className="text-sm">
-                          {new Date(selectedRecord.created_at).toLocaleString()}
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-xs uppercase text-slate-400">
-                          Updated
-                        </p>
-                        <p className="text-sm">
-                          {selectedRecord.updated_at
-                            ? new Date(selectedRecord.updated_at).toLocaleString()
-                            : "Not updated yet"}
-                        </p>
-                      </div>
-                    </div>
                     {isEditing && (
                       <div className="flex gap-3 pt-2">
                         <button
