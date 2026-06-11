@@ -100,6 +100,11 @@ function App() {
   const [entryType, setEntryType] = useState("auto");
   const [manualService, setManualService] = useState("");
   const [manualTags, setManualTags] = useState("");
+  const [postmortemImpact, setPostmortemImpact] = useState("");
+  const [postmortemTimeline, setPostmortemTimeline] = useState("");
+  const [postmortemResolution, setPostmortemResolution] = useState("");
+  const [postmortemActions, setPostmortemActions] = useState("");
+  const [postmortemLessons, setPostmortemLessons] = useState("");
   const [activeSection, setActiveSection] = useState("dashboard");
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -171,7 +176,26 @@ function App() {
 
       recordData = {
         title: newEntryText.slice(0, 80),
-        description: newEntryText,
+        description:
+          entryType === "postmortem"
+            ? `Summary:
+${newEntryText}
+
+Impact:
+${postmortemImpact}
+
+Timeline:
+${postmortemTimeline}
+
+Resolution:
+${postmortemResolution}
+
+Action Items:
+${postmortemActions}
+
+Lessons Learned:
+${postmortemLessons}`
+            : newEntryText,
         type: entryType,
         service: manualService.trim() || "Unknown",
         severity: "low",
@@ -197,6 +221,11 @@ function App() {
     setEntryType("auto");
     setManualService("");
     setManualTags("");
+    setPostmortemImpact("");
+    setPostmortemTimeline("");
+    setPostmortemResolution("");
+    setPostmortemActions("");
+    setPostmortemLessons("");
   };
 
   const handleStartEdit = () => {
@@ -957,6 +986,48 @@ function App() {
                         placeholder="Example: dns, domains, naming"
                       />
                     </div>
+                    {entryType === "postmortem" && (
+                      <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                        <h3 className="font-semibold text-slate-800">
+                          Postmortem Template
+                        </h3>
+
+                        <textarea
+                          value={postmortemImpact}
+                          onChange={(event) => setPostmortemImpact(event.target.value)}
+                          className="h-24 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
+                          placeholder="Impact: Who or what was affected?"
+                        />
+
+                        <textarea
+                          value={postmortemTimeline}
+                          onChange={(event) => setPostmortemTimeline(event.target.value)}
+                          className="h-24 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
+                          placeholder="Timeline: What happened and when?"
+                        />
+
+                        <textarea
+                          value={postmortemResolution}
+                          onChange={(event) => setPostmortemResolution(event.target.value)}
+                          className="h-24 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
+                          placeholder="Resolution: How was the issue fixed?"
+                        />
+
+                        <textarea
+                          value={postmortemActions}
+                          onChange={(event) => setPostmortemActions(event.target.value)}
+                          className="h-24 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
+                          placeholder="Action Items: What should be improved?"
+                        />
+
+                        <textarea
+                          value={postmortemLessons}
+                          onChange={(event) => setPostmortemLessons(event.target.value)}
+                          className="h-24 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
+                          placeholder="Lessons Learned"
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
                 <textarea
@@ -1021,7 +1092,9 @@ function App() {
         </section>
       </main>
     </div>
+
   );
+
 }
 
 export default App;
