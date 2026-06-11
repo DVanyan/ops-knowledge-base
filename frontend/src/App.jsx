@@ -822,11 +822,11 @@ ${postmortemLessons}`
                           </div>
                         </>
                       )}
-                      <div>
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                         <p className="text-xs uppercase text-slate-400">
                           Service
                         </p>
-                        <p className="font-medium">
+                        <p className="mt-1 font-semibold text-slate-900">
                           {selectedRecord.service || "Unknown"}
                         </p>
                       </div>
@@ -845,11 +845,13 @@ ${postmortemLessons}`
                         </span>
                       </div>
 
-                      <div>
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                         <p className="text-xs uppercase text-slate-400">
                           Source
                         </p>
-                        <p className="font-medium">{selectedRecord.source}</p>
+                        <p className="mt-1 font-semibold text-slate-900">
+                          {selectedRecord.source}
+                        </p>
                       </div>
                     </div>
 
