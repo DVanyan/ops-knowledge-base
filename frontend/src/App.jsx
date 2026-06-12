@@ -115,6 +115,35 @@ const getTimelineItems = (text) => {
     .map((item) => item.trim())
     .filter(Boolean);
 };
+const getSummary = (text) => {
+  return getSectionText(text, "Summary", "Impact");
+};
+
+const getImpact = (text) => {
+  return getSectionText(text, "Impact", "Timeline");
+};
+
+const getResolution = (text) => {
+  return getSectionText(text, "Resolution", "Action Items");
+};
+
+const getActionItems = (text) => {
+  return getSectionText(
+    text,
+    "Action Items",
+    "Lessons Learned"
+  )
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
+
+const getLessonsLearned = (text) => {
+  return getSectionText(text, "Lessons Learned")
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
 const menu = [
   { id: "dashboard", name: "Dashboard", icon: Home },
   { id: "incident", name: "Incidents", icon: AlertTriangle },
@@ -664,6 +693,13 @@ ${postmortemLessons}`
                           {record.type}
                         </span>
                         <span
+                          className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusClass(
+                            record.status
+                          )}`}
+                        >
+                          {record.status || "open"}
+                        </span>
+                        <span
                           className={`rounded-full px-3 py-1 text-xs font-medium ${getSeverityClass(
                             record.severity
                           )}`}
@@ -686,7 +722,14 @@ ${postmortemLessons}`
                       </div>
                     </div>
                     <span className="text-sm text-slate-500">
-                      {new Date(record.created_at).toLocaleDateString()}
+                      {new Date(record.created_at).toLocaleDateString(
+                        "en-US",
+                        {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        }
+                      )}
                     </span>
                   </div>
                 ))}
@@ -763,9 +806,78 @@ ${postmortemLessons}`
                             </div>
                           )}
 
-                          <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">
-                            {selectedRecord.description || "No description"}
-                          </p>
+                          {selectedRecord.type === "postmortem" ? (
+                            <div className="space-y-4">
+                              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                  Summary
+                                </p>
+                                <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                                  {getSummary(selectedRecord.description) || "No summary provided"}
+                                </p>
+                              </div>
+
+                              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                  Impact
+                                </p>
+                                <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                                  {getImpact(selectedRecord.description) || "No impact provided"}
+                                </p>
+                              </div>
+
+                              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                  Resolution
+                                </p>
+                                <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                                  {getResolution(selectedRecord.description) || "No resolution provided"}
+                                </p>
+                              </div>
+
+                              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                  Action Items
+                                </p>
+
+                                <div className="space-y-2">
+                                  {getActionItems(selectedRecord.description).length > 0 ? (
+                                    getActionItems(selectedRecord.description).map((item, index) => (
+                                      <div key={index} className="flex gap-2 text-sm text-slate-700">
+                                        <span className="text-green-600">✓</span>
+                                        <span>{item}</span>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <p className="text-sm text-slate-500">No action items provided</p>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                  Lessons Learned
+                                </p>
+
+                                <div className="space-y-2">
+                                  {getLessonsLearned(selectedRecord.description).length > 0 ? (
+                                    getLessonsLearned(selectedRecord.description).map((lesson, index) => (
+                                      <div key={index} className="flex gap-2 text-sm text-slate-700">
+                                        <span className="text-blue-600">•</span>
+                                        <span>{lesson}</span>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <p className="text-sm text-slate-500">No lessons learned provided</p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                              {selectedRecord.description || "No description"}
+                            </p>
+                          )}
                           {selectedRecord.type === "postmortem" &&
                             getTimelineItems(selectedRecord.description).length > 0 && (
                               <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4">
