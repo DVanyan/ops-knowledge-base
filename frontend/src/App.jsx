@@ -17,13 +17,25 @@ import {
 
 const API_URL = "http://192.168.64.9:8089";
 const getStatusClass = (status) => {
-  switch (status) {
+  switch (status?.toLowerCase()) {
+    case "draft":
+      return "bg-slate-200 text-slate-700";
+
+    case "review":
+      return "bg-yellow-100 text-yellow-700";
+
+    case "published":
+      return "bg-green-100 text-green-700";
+
     case "resolved":
       return "bg-green-100 text-green-700";
+
     case "investigating":
       return "bg-yellow-100 text-yellow-700";
+
     case "closed":
       return "bg-slate-200 text-slate-700";
+
     default:
       return "bg-red-100 text-red-700";
   }
@@ -131,6 +143,8 @@ function App() {
   const [postmortemResolution, setPostmortemResolution] = useState("");
   const [postmortemActions, setPostmortemActions] = useState("");
   const [postmortemLessons, setPostmortemLessons] = useState("");
+  const [postmortemStatus, setPostmortemStatus] = useState("draft");
+  const [postmortemSeverity, setPostmortemSeverity] = useState("low");
   const [activeSection, setActiveSection] = useState("dashboard");
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -224,8 +238,14 @@ ${postmortemLessons}`
             : newEntryText,
         type: entryType,
         service: manualService.trim() || "Unknown",
-        severity: "low",
-        status: "open",
+        severity:
+          entryType === "postmortem"
+            ? postmortemSeverity
+            : "low",
+        status:
+          entryType === "postmortem"
+            ? postmortemStatus
+            : "open",
         source: "manual",
         commands: "",
         tags: parsedTags.length > 0 ? parsedTags : [entryType],
@@ -252,6 +272,8 @@ ${postmortemLessons}`
     setPostmortemResolution("");
     setPostmortemActions("");
     setPostmortemLessons("");
+    setPostmortemSeverity("low");
+    setPostmortemStatus("draft");
   };
 
   const handleStartEdit = () => {
@@ -870,16 +892,28 @@ ${postmortemLessons}`
                           </span>
                         </div>
 
-                        <div className="flex justify-between">
+                        <div className="flex justify-between items-center">
                           <span className="text-slate-500">Status</span>
 
-                          <span
-                            className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getStatusClass(
-                              selectedRecord.status
-                            )}`}
-                          >
-                            {selectedRecord.status || "open"}
-                          </span>
+                          {isEditing && selectedRecord.type === "postmortem" ? (
+                            <select
+                              value={editStatus}
+                              onChange={(event) => setEditStatus(event.target.value)}
+                              className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                            >
+                              <option value="draft">Draft</option>
+                              <option value="review">Review</option>
+                              <option value="published">Published</option>
+                            </select>
+                          ) : (
+                            <span
+                              className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getStatusClass(
+                                selectedRecord.status
+                              )}`}
+                            >
+                              {selectedRecord.status}
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex justify-between">
@@ -1091,7 +1125,37 @@ ${postmortemLessons}`
                         <h3 className="font-semibold text-slate-800">
                           Postmortem Template
                         </h3>
+                        <div>
+                          <label className="mb-2 block text-sm font-medium text-slate-700">
+                            Postmortem Status
+                          </label>
 
+                          <select
+                            value={postmortemStatus}
+                            onChange={(event) => setPostmortemStatus(event.target.value)}
+                            className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
+                          >
+                            <option value="draft">Draft</option>
+                            <option value="review">Review</option>
+                            <option value="published">Published</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="mb-2 block text-sm font-medium text-slate-700">
+                            Severity
+                          </label>
+
+                          <select
+                            value={postmortemSeverity}
+                            onChange={(event) => setPostmortemSeverity(event.target.value)}
+                            className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
+                          >
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="critical">Critical</option>
+                          </select>
+                        </div>
                         <textarea
                           value={postmortemImpact}
                           onChange={(event) => setPostmortemImpact(event.target.value)}
