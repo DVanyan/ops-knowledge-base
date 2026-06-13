@@ -15,7 +15,7 @@ import {
   Moon,
 } from "lucide-react";
 
-const API_URL = "http://192.168.10.17:8089";
+const API_URL = "http://192.168.64.9:8089";
 const getStatusClass = (status) => {
   switch (status?.toLowerCase()) {
     case "draft":
