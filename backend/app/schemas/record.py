@@ -13,6 +13,7 @@ class RecordCreate(BaseModel):
     severity: Optional[str] = "low"
     status: Optional[str] = "open"
     source: Optional[str] = "manual"
+    external_id: Optional[str] = None
     root_cause: Optional[str] = None
     solution: Optional[str] = None
     commands: Optional[str] = None

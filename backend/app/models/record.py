@@ -20,6 +20,7 @@ class Record(Base):
     severity = Column(String(50), nullable=True, default="low")
     status = Column(String(50), nullable=True, default="open")
     source = Column(String(50), nullable=True, default="manual")
+    external_id = Column(String(100), nullable=True, index=True)
 
     root_cause = Column(Text, nullable=True)
     solution = Column(Text, nullable=True)

@@ -52,6 +52,79 @@ def create_record(record: RecordCreate, db: Session = Depends(get_db)):
     db.refresh(db_record)
     return db_record
 
+
+@app.post("/api/events", response_model=RecordOut)
+def ingest_event(payload: dict, db: Session = Depends(get_db)):
+    source = payload.get("source", "zabbix")
+    external_id = payload.get("external_id")
+    host = payload.get("host", "unknown-host")
+    event_name = payload.get("event_name", "Unknown event")
+    event_status = payload.get("event_status", "PROBLEM").upper()
+    severity = payload.get("severity", "low")
+    service = payload.get("service", "Unknown")
+    message = payload.get("message", "")
+
+    if not external_id:
+        raise HTTPException(status_code=400, detail="external_id is required")
+
+    existing_record = (
+        db.query(Record)
+        .filter(
+            Record.source == source,
+            Record.external_id == external_id,
+        )
+        .first()
+    )
+
+    if event_status in ["RESOLVED", "OK"]:
+        if not existing_record:
+            raise HTTPException(
+                status_code=404,
+                detail="Original event record not found",
+            )
+
+        existing_record.status = "resolved"
+        existing_record.description = f"""{existing_record.description}
+
+Recovery:
+Host: {host}
+Event: {event_name}
+Status: {event_status}
+Message: {message}
+"""
+        db.commit()
+        db.refresh(existing_record)
+        return existing_record
+
+    if existing_record:
+        return existing_record
+
+    db_record = Record(
+        title=f"Zabbix Event: {event_name} on {host}",
+        description=f"""Event source: {source}
+Host: {host}
+Event: {event_name}
+Status: {event_status}
+Severity: {severity}
+Message: {message}
+""",
+        type="incident",
+        service=service,
+        host=host,
+        severity=severity.lower(),
+        status="open",
+        source=source,
+        external_id=external_id,
+        tags=[source, "event", "incident"],
+    )
+
+    db.add(db_record)
+    db.commit()
+    db.refresh(db_record)
+
+    return db_record
+
+
 @app.put("/api/records/{record_id}", response_model=RecordOut)
 def update_record(
     record_id: int,
@@ -67,6 +140,7 @@ def update_record(
     db.refresh(db_record)
     return db_record
 
+
 @app.delete("/api/records/{record_id}")
 def delete_record(record_id: int, db: Session = Depends(get_db)):
     db_record = db.query(Record).filter(Record.id == record_id).first()
@@ -78,6 +152,7 @@ def delete_record(record_id: int, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": "Record deleted", "id": record_id}
+
 
 @app.post("/api/classify")
 def classify_record(payload: dict):
