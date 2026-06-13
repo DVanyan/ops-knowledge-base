@@ -16,6 +16,72 @@ import {
 } from "lucide-react";
 
 const API_URL = "http://192.168.64.9:8089";
+
+const formatDateTimeMultiline = (dateString, fallback = "N/A") => {
+  if (!dateString) return null;
+
+  const date = new Date(dateString);
+
+  return {
+    date: date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }),
+
+    time: date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    }),
+  };
+};
+
+const formatDuration = (startDate, endDate) => {
+  if (!startDate || !endDate) return "N/A";
+
+  const diffMs = new Date(endDate) - new Date(startDate);
+
+  if (diffMs < 0) return "N/A";
+
+  const totalSeconds = Math.floor(diffMs / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m ${seconds}s`;
+  }
+
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`;
+  }
+
+  return `${seconds}s`;
+};
+
+const formatDateTime = (dateString, fallback = "N/A") => {
+  if (!dateString) return fallback;
+
+  const date = new Date(dateString);
+
+  return (
+    date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }) +
+    " " +
+    date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    })
+  );
+};
+
 const getStatusClass = (status) => {
   switch (status?.toLowerCase()) {
     case "draft":
@@ -722,14 +788,7 @@ ${postmortemLessons}`
                       </div>
                     </div>
                     <span className="text-sm text-slate-500">
-                      {new Date(record.created_at).toLocaleDateString(
-                        "en-US",
-                        {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        }
-                      )}
+                      {formatDateTime(record.created_at)}
                     </span>
                   </div>
                 ))}
@@ -1058,66 +1117,140 @@ ${postmortemLessons}`
 
                         <div className="flex justify-between">
                           <span className="text-slate-500">Created</span>
-                          <span>
-                            {new Date(selectedRecord.created_at).toLocaleDateString(
-                              "en-US",
-                              {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                              }
-                            )}
-                          </span>
+
+                          <div className="text-right">
+                            <div>
+                              {formatDateTimeMultiline(selectedRecord.created_at)?.date}
+                            </div>
+
+                            <div className="text-xs text-slate-500">
+                              {formatDateTimeMultiline(selectedRecord.created_at)?.time}
+                            </div>
+                          </div>
                         </div>
 
                         <div className="flex justify-between">
                           <span className="text-slate-500">Updated</span>
-                          <span>
-                            {selectedRecord.updated_at
-                              ? new Date(selectedRecord.updated_at).toLocaleDateString(
-                                "en-US",
-                                {
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "numeric",
-                                }
-                              )
-                              : "Never updated"}
-                          </span>
+
+                          {selectedRecord.updated_at ? (
+                            <div className="text-right">
+                              <div>
+                                {formatDateTimeMultiline(selectedRecord.updated_at)?.date}
+                              </div>
+
+                              <div className="text-xs text-slate-500">
+                                {formatDateTimeMultiline(selectedRecord.updated_at)?.time}
+                              </div>
+                            </div>
+                          ) : (
+                            <span>Never updated</span>
+                          )}
                         </div>
                         <div className="flex justify-between">
                           <span className="text-slate-500">First Seen</span>
-                          <span>
-                            {selectedRecord.first_seen
-                              ? new Date(selectedRecord.first_seen).toLocaleString()
-                              : "Not tracked"}
-                          </span>
+
+                          {selectedRecord.first_seen ? (
+                            <div className="text-right">
+                              <div>
+                                {formatDateTimeMultiline(selectedRecord.first_seen)?.date}
+                              </div>
+
+                              <div className="text-xs text-slate-500">
+                                {formatDateTimeMultiline(selectedRecord.first_seen)?.time}
+                              </div>
+                            </div>
+                          ) : (
+                            <span>Not tracked</span>
+                          )}
                         </div>
 
                         <div className="flex justify-between">
                           <span className="text-slate-500">Last Seen</span>
-                          <span>
-                            {selectedRecord.last_seen
-                              ? new Date(selectedRecord.last_seen).toLocaleString()
-                              : "Not tracked"}
-                          </span>
+
+                          {selectedRecord.last_seen ? (
+                            <div className="text-right">
+                              <div>
+                                {formatDateTimeMultiline(selectedRecord.last_seen)?.date}
+                              </div>
+
+                              <div className="text-xs text-slate-500">
+                                {formatDateTimeMultiline(selectedRecord.last_seen)?.time}
+                              </div>
+                            </div>
+                          ) : (
+                            <span>Not tracked</span>
+                          )}
                         </div>
 
                         <div className="flex justify-between">
                           <span className="text-slate-500">Resolved At</span>
-                          <span>
-                            {selectedRecord.resolved_at
-                              ? new Date(selectedRecord.resolved_at).toLocaleString()
-                              : "Not resolved"}
-                          </span>
+
+                          {selectedRecord.resolved_at ? (
+                            <div className="text-right">
+                              <div>
+                                {formatDateTimeMultiline(selectedRecord.resolved_at)?.date}
+                              </div>
+
+                              <div className="text-xs text-slate-500">
+                                {formatDateTimeMultiline(selectedRecord.resolved_at)?.time}
+                              </div>
+                            </div>
+                          ) : (
+                            <span>Not resolved</span>
+                          )}
                         </div>
 
-                        <div className="flex justify-between">
-                          <span className="text-slate-500">Event Count</span>
-                          <span className="font-medium">
-                            {selectedRecord.event_count || 1}
-                          </span>
-                        </div>
+                        {selectedRecord.type !== "incident" && (
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">Event Count</span>
+                            <span className="font-medium">
+                              {selectedRecord.event_count || 1}
+                            </span>
+                          </div>
+                        )}
+
+                        {selectedRecord.type === "incident" && (
+                          <>
+                            <hr className="border-slate-200" />
+
+                            <div>
+                              <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Incident Lifecycle
+                              </h4>
+
+                              <div className="space-y-3">
+                                <div className="flex justify-between">
+                                  <span className="text-slate-500">Duration</span>
+                                  <span className="font-medium">
+                                    {formatDuration(
+                                      selectedRecord.first_seen,
+                                      selectedRecord.resolved_at || selectedRecord.last_seen
+                                    )}
+                                  </span>
+                                </div>
+
+                                <div className="flex justify-between">
+                                  <span className="text-slate-500">Occurrences</span>
+                                  <span className="font-medium">
+                                    {selectedRecord.event_count || 1}
+                                  </span>
+                                </div>
+
+                                <div className="flex justify-between">
+                                  <span className="text-slate-500">Current State</span>
+                                  <span
+                                    className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getStatusClass(
+                                      selectedRecord.status
+                                    )}`}
+                                  >
+                                    {selectedRecord.status || "open"}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </>
+                        )}
+
                         <hr className="border-slate-200" />
 
                         <div>
