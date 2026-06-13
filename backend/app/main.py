@@ -1,8 +1,10 @@
+from datetime import datetime, timezone
 from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from datetime import datetime, timezone
 
 from app.db.session import Base, engine, get_db
 from app.models.record import Record
@@ -55,6 +57,7 @@ def create_record(record: RecordCreate, db: Session = Depends(get_db)):
 
 @app.post("/api/events", response_model=RecordOut)
 def ingest_event(payload: dict, db: Session = Depends(get_db)):
+    now = datetime.now(timezone.utc)
     source = payload.get("source", "zabbix")
     external_id = payload.get("external_id")
     host = payload.get("host", "unknown-host")
@@ -84,6 +87,9 @@ def ingest_event(payload: dict, db: Session = Depends(get_db)):
             )
 
         existing_record.status = "resolved"
+        existing_record.last_seen = now
+        existing_record.resolved_at = now
+        existing_record.event_count = (existing_record.event_count or 1) + 1
         existing_record.description = f"""{existing_record.description}
 
 Recovery:
@@ -97,6 +103,12 @@ Message: {message}
         return existing_record
 
     if existing_record:
+        existing_record.last_seen = now
+        existing_record.event_count = (existing_record.event_count or 1) + 1
+
+        db.commit()
+        db.refresh(existing_record)
+
         return existing_record
 
     db_record = Record(
@@ -115,6 +127,9 @@ Message: {message}
         status="open",
         source=source,
         external_id=external_id,
+        first_seen=now,
+        last_seen=now,
+        event_count=1,
         tags=[source, "event", "incident"],
     )
 

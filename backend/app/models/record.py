@@ -21,6 +21,11 @@ class Record(Base):
     status = Column(String(50), nullable=True, default="open")
     source = Column(String(50), nullable=True, default="manual")
     external_id = Column(String(100), nullable=True, index=True)
+    first_seen = Column(DateTime(timezone=True), nullable=True)
+    last_seen = Column(DateTime(timezone=True), nullable=True)
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
+    event_count = Column(Integer, nullable=True, default=1)
+    
 
     root_cause = Column(Text, nullable=True)
     solution = Column(Text, nullable=True)

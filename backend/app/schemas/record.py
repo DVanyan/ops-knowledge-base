@@ -14,6 +14,10 @@ class RecordCreate(BaseModel):
     status: Optional[str] = "open"
     source: Optional[str] = "manual"
     external_id: Optional[str] = None
+    first_seen: Optional[datetime] = None
+    last_seen: Optional[datetime] = None
+    resolved_at: Optional[datetime] = None
+    event_count: Optional[int] = 1
     root_cause: Optional[str] = None
     solution: Optional[str] = None
     commands: Optional[str] = None

@@ -1085,6 +1085,39 @@ ${postmortemLessons}`
                               : "Never updated"}
                           </span>
                         </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">First Seen</span>
+                          <span>
+                            {selectedRecord.first_seen
+                              ? new Date(selectedRecord.first_seen).toLocaleString()
+                              : "Not tracked"}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Last Seen</span>
+                          <span>
+                            {selectedRecord.last_seen
+                              ? new Date(selectedRecord.last_seen).toLocaleString()
+                              : "Not tracked"}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Resolved At</span>
+                          <span>
+                            {selectedRecord.resolved_at
+                              ? new Date(selectedRecord.resolved_at).toLocaleString()
+                              : "Not resolved"}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Event Count</span>
+                          <span className="font-medium">
+                            {selectedRecord.event_count || 1}
+                          </span>
+                        </div>
                         <hr className="border-slate-200" />
 
                         <div>
